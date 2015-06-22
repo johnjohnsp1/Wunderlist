@@ -14,10 +14,11 @@ PowerShell Module for Wunderlist
 # Wunderlist Register your app
 1. Go to https://developer.wunderlist.com/
 2. Login with your Wunderlist account
-3. Enter a name for your awesome app
-4. Enter a description for your application
-5. Enter the URL for your application
-6. Enter URL to receive the authorization code
+3. Register your app
+4. Enter a name for your awesome app
+5. Enter a description for your application
+6. Enter the URL for your application
+7. Enter URL to receive the authorization code
 8. Save
 9. Retrieve and write down your client id and app url needed for using the PowerShell Wunderlist Module
 
