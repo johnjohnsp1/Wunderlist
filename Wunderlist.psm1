@@ -276,9 +276,60 @@ Function Get-WunderlistTask {
     }
 }
 
+Function New-WunderlistTask
+{
+<#
+  .SYNOPSIS
+   This Function Creates  new Wunderlist Task for a specified List.
+  .DESCRIPTION
+   This Function Creates  new Wunderlist Task for a specified List.
+  .EXAMPLE
+   $DebugPreference = 'continue'; #Enable debug messages to be sent to console
+   $AuthUrl = 'https://www.wunderlist.com/oauth/authorize'; # The base authorization URL from the service provider
+   $ClientId = 'xxxxxxxxxxxxxxxxxxxx'; # Your registered application’s client ID
+   $RedirectUri = 'http://www.stranger.nl'; # The callback URL configured on your application
+
+   #Call Get-oAuth2AccessToken
+   Get-oAuth2AccessToken `
+    -AuthUrl $AuthUrl `
+    -ClientId $ClientId `
+    -RedirectUri $RedirectUri
+   
+   New-WunderlistTask -AccessToken '619c400c87156477cce37b4369f1adf8b278437a027bdd83962ba44abeb5' `
+       -ClientId '123456789' -listid '16461524' -title 'Testing Wunderlist PowerShell module'
+  .LINK
+  https://developer.wunderlist.com/documentation/endpoints/task
+
+#>
+    [CmdletBinding()]
+    param
+    (
+        [Parameter(Mandatory = $true)] [string]$AccessToken,
+        [Parameter(Mandatory = $true)] [string]$ClientId,
+        [Parameter(Mandatory=$true)]   [int]$listid,        
+        [Parameter(Mandatory=$true)]   [string]$title
+    )
+    
+    
+        $HttpRequesturl =  'https://a.wunderlist.com/api/v1/tasks'
+        $Body = "list_id=$listid, title=$title"
+
+        $Body = "'list_id':$listid,'title':$title"
+        $hashtable = @{'list_id' = $listid;
+                       'title'= $title
+                      }
+
+        $body = ConvertTo-Json -InputObject $hashtable
+        $result = Invoke-RestMethod -URI $HttpRequestUrl -Method POST -body $body -Headers @{ 'X-Access-Token' = $AccessToken; 'X-Client-ID' =  $clientid } -ContentType "application/json"
+        $result
+    
+    
+}
+
 Export-ModuleMember -Function @( 'Get-oAuth2AccessToken',
     'Get-WunderlistUser',
     'Get-WunderlistTask',
     'Get-WunderlistReminder',
-    'Get-WunderlistList')
+    'Get-WunderlistList',
+    'New-WunderlistTask')
 
