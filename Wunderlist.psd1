@@ -71,7 +71,10 @@ FunctionsToExport = @( 'Get-oAuth2AccessToken',
     'Get-WunderlistTask',
     'Get-WunderlistReminder',
     'Get-WunderlistList',
-    'New-WunderlistTask')
+    'New-WunderlistTask',
+    'New-AuthenticationSettings',
+    'Save-AuthenticationSettings',
+    'Load-AuthenticationSettings')
 
 # Cmdlets to export from this module
 CmdletsToExport = '*'
