@@ -1,4 +1,6 @@
-﻿<#	
+﻿$script:AuthenticationSettingsPath = "$PSScriptRoot\Authentication.config.xml"
+
+<#	
 	===========================================================================
 	 Created on:   	6/22/2015 12:00 PM
 	 Created by:   	Stefan Stranger
@@ -87,6 +89,28 @@ Write-Debug -Message ('Sleeping {0} seconds for access URL' -f $SleepInterval);
  Write-Output -InputObject @{ AccessToken = $AccessToken; };
  }
 
+function Get-WunderlistData 
+{
+    param (
+        $RequestUrl
+    )
+
+    $settings = Load-AuthenticationSettings
+    $headers = Build-AccessHeader -AuthenticationSettings $settings
+    Invoke-RestMethod -URI $RequestUrl -Method GET -Headers $headers -ContentType 'application/json'
+}
+
+function Build-AccessHeader
+{
+    param (
+        $AuthenticationSettings
+    )
+
+    @{ 
+        'X-Access-Token' = $AuthenticationSettings.AccessToken
+        'X-Client-ID' =  $AuthenticationSettings.ClientId 
+     }
+}
 
 Function Get-WunderlistUser {
 <#
@@ -113,16 +137,10 @@ Function Get-WunderlistUser {
 #>
 	[CmdletBinding()]
 	[OutputType('System.Management.Automation.PSCustomObject')]
-	param (
-		[Parameter(Mandatory = $true)] [string]$AccessToken,
-        [Parameter(Mandatory = $true)] [string]$ClientId
-	)
+    param()
 
     process {
-
-        $HttpRequesturl = "https://a.wunderlist.com/api/v1/user"
-        $Result = Invoke-RestMethod -URI $HttpRequestUrl -Method Get -Headers @{ 'X-Access-Token' = $AccessToken; 'X-Client-ID' =  $ClientId } -ContentType "application/json"
-        $Result
+        Get-WunderlistData -RequestUrl 'https://a.wunderlist.com/api/v1/user'
     }
 }
 
@@ -153,18 +171,11 @@ Function Get-WunderlistList {
 #>
 	[CmdletBinding()]
 	[OutputType('System.Management.Automation.PSCustomObject')]
-	param (
-		[Parameter(Mandatory = $true)] [string]$AccessToken,
-        [Parameter(Mandatory = $true)] [string]$ClientId
-	)
+    param()
 
     process {
-
-        $HttpRequesturl =  "https://a.wunderlist.com/api/v1/lists"
-        $Result = Invoke-RestMethod -URI $HttpRequestUrl -Method Get -Headers @{ 'X-Access-Token' = $AccessToken; 'X-Client-ID' =  $clientid } -ContentType "application/json"
-        $Result
+        Get-WunderlistData -RequestUrl 'https://a.wunderlist.com/api/v1/lists'
     }
-
 }
 
 Function Get-WunderlistReminder {
@@ -193,16 +204,10 @@ Function Get-WunderlistReminder {
 #>
 	[CmdletBinding()]
 	[OutputType('System.Management.Automation.PSCustomObject')]
-	param (
-		[Parameter(Mandatory = $true)] [string]$AccessToken,
-        [Parameter(Mandatory = $true)] [string]$ClientId
-	)
+	param (	)
 
     process {
-
-        $HttpRequesturl =  "https://a.wunderlist.com/api/v1/reminders"
-        $Result = Invoke-RestMethod -URI $HttpRequestUrl -Method Get -Headers @{ 'X-Access-Token' = $AccessToken; 'X-Client-ID' =  $clientid } -ContentType "application/json"
-        $Result
+        Get-WunderlistData -RequestUrl 'https://a.wunderlist.com/api/v1/reminders'
     }
 }
 
@@ -252,28 +257,23 @@ Function Get-WunderlistTask {
 	[CmdletBinding()]
 	[OutputType('System.Management.Automation.PSCustomObject')]
 	param (
-		[Parameter(Mandatory = $true)] [string]$AccessToken,
-        [Parameter(Mandatory = $true)] [string]$ClientId,
         [Parameter(Mandatory  =$true,ValueFromPipelineByPropertyName=$true)][string] [Alias("ListId")] $Id,
         [Parameter(Mandatory = $false)] [switch] $Completed
 	)
 
-    
-
     process {
+        $requesturl =  Build-TaskUrl -Id $Id -Completed $Completed
+        Get-WunderlistData -RequestUrl $requesturl
+    }
+}
 
-    if ($Completed) {
-        [string]$Compl = 'true' 
-    }
-    else
-    {
-        [string]$Compl = 'false' 
-    }
+function Build-TaskUrl {
+    param (
+        $Id, 
+        [switch]$Completed
+    )
 
-        $HttpRequesturl =  "https://a.wunderlist.com/api/v1/tasks?list_id=$Id&completed=$Compl"
-        $result = Invoke-RestMethod -URI $HttpRequestUrl -Method Get -Headers @{ 'X-Access-Token' = $AccessToken; 'X-Client-ID' =  $clientid } -ContentType "application/json"
-        $result
-    }
+    'https://a.wunderlist.com/api/v1/tasks?list_id={0}&completed={1}' -f $Id, $Completed.ToString().ToLower()
 }
 
 Function New-WunderlistTask
@@ -326,10 +326,47 @@ Function New-WunderlistTask
     
 }
 
+#region Authentication
+function Get-AuthenticationSettingsPath 
+{
+    $script:AuthenticationSettingsPath
+}
+
+function New-AuthenticationSettings
+{
+    param (
+        $ClientId,
+        $AccessToken
+    )
+
+    New-Object -TypeName psObject -Property @{
+        ClientId = $ClientId
+    	AccessToken = $AccessToken
+    }
+}
+
+function Save-AuthenticationSettings {
+    param (
+        $AuthenticationSettings
+    )
+
+    $path = Get-AuthenticationSettingsPath
+    Export-Clixml -Path $path -InputObject $AuthenticationSettings
+}
+
+function Load-AuthenticationSettings {
+    $path = Get-AuthenticationSettingsPath
+    Import-Clixml -Path $path
+}
+#endregion
+
 Export-ModuleMember -Function @( 'Get-oAuth2AccessToken',
     'Get-WunderlistUser',
     'Get-WunderlistTask',
     'Get-WunderlistReminder',
     'Get-WunderlistList',
-    'New-WunderlistTask')
+    'New-WunderlistTask',
+    'New-AuthenticationSettings',
+    'Save-AuthenticationSettings',
+    'Load-AuthenticationSettings')
 
