@@ -297,6 +297,20 @@ Function New-WunderlistTask
    
    New-WunderlistTask -AccessToken '619c400c87156477cce37b4369f1adf8b278437a027bdd83962ba44abeb5' `
        -ClientId '123456789' -listid '16461524' -title 'Testing Wunderlist PowerShell module'
+  .EXAMPLE
+   $params = @{'clientid' = 'f8fee9ecf6f094efrdg';
+               'accesstoken'  = 'babc2e1a0875af11360ac696c9170ced709d729704e4d6cc123456789h5f'
+               'listid'  = '164611234';
+               'title'  = 'Testing posh module';
+               'assignee_id'= '10401234';
+               'completed' = $true;
+               'recurrence_type'= 'day';
+               'recurrence_count'= '2';
+               'due_date'= '2015-06-30';
+               'starred'= $false;
+              }
+    New-WunderlistTask @params
+
   .LINK
   https://developer.wunderlist.com/documentation/endpoints/task
 
@@ -304,21 +318,35 @@ Function New-WunderlistTask
     [CmdletBinding()]
     param
     (
-        [Parameter(Mandatory = $true)] [string]$AccessToken,
-        [Parameter(Mandatory = $true)] [string]$ClientId,
-        [Parameter(Mandatory=$true)]   [int]$listid,        
-        [Parameter(Mandatory=$true)]   [string]$title
+        [Parameter(Mandatory = $true)]   [string]$AccessToken,
+        [Parameter(Mandatory = $true)]   [string]$ClientId,
+        [Parameter(Mandatory = $true)]   [int]$listid,        
+        [Parameter(Mandatory = $true)]   [string]$title,
+        [Parameter(Mandatory = $false)]  [int]$assignee_id,
+        [Parameter(Mandatory = $false, ParameterSetName='Recurrence')]  
+                                         [bool]$completed,
+        [ValidateSet("day", "week", "month","year")]
+        [Parameter(Mandatory = $false, ParameterSetName='Recurrence')]
+                                         [string]$recurrence_type,
+        [Parameter(Mandatory = $false)]  [int]$recurrence_count,
+        [Parameter(Mandatory = $false)] 
+        [ValidatePattern("^(19|20)\d\d[-](0[1-9]|1[012])[-](0[1-9]|[12][0-9]|3[01])")]      [string]$due_date,
+        [Parameter(Mandatory = $false)]  [bool]$starred
+
     )
     
     
         $HttpRequesturl =  'https://a.wunderlist.com/api/v1/tasks'
-        $Body = "list_id=$listid, title=$title"
 
-        $Body = "'list_id':$listid,'title':$title"
-        $hashtable = @{'list_id' = $listid;
-                       'title'= $title
+        $hashtable = [ordered]@{'list_id'   = $listid;
+                       'title'              = $title;
+                       'assignee_id'        = $assignee_id;
+                       'completed'          = $completed;
+                       'recurrence_type'    = $recurrence_type;
+                       'recurrence_count'   = $recurrence_count;
+                       'due_date'           = $due_date;
+                       'starred'            = $starred;
                       }
-
         $body = ConvertTo-Json -InputObject $hashtable
         $result = Invoke-RestMethod -URI $HttpRequestUrl -Method POST -body $body -Headers @{ 'X-Access-Token' = $AccessToken; 'X-Client-ID' =  $clientid } -ContentType "application/json"
         $result
