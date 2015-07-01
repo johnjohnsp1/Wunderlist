@@ -31,3 +31,22 @@ Describe 'Get-WunderListUser' {
         $actual | Should Not BeNullOrEmpty 
     }
 }
+
+
+Describe 'New-WunderListTask' {
+    It 'Outputs created Wunderlist Task correctly' {
+    	# -- Arrange
+        $listboxid = (Get-WunderlistList | where-object {$_.title -eq 'inbox'}).id
+    	$expected = $listboxid
+        $parameters = @{'listid'  = $listboxid;
+                        'title'  = 'Testing Wunderlist module';
+                        'completed' = $true;
+                       } 
+    	# -- Act
+        $task = New-WunderlistTask @parameters
+        $actual = $task.title 
+    	
+    	# -- Assert
+        $actual | Should Not BeNullOrEmpty 
+    }
+}
