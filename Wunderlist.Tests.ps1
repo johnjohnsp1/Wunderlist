@@ -5,15 +5,15 @@ Import-Module -Force "$here\$sut"
 InModuleScope -ModuleName WunderList {
     Describe 'Get-WunderlistUser' {
         It 'Requests data from Wunderlist correctly' {
-    	    # -- Arrange
+    	    # -- Arrange (What is being set up and initialized in the arrange section)
             $url = 'https://a.wunderlist.com/api/v1/user'
             $requestFilter = {$RequestUrl -eq $url}
             Mock Get-WunderlistData -ParameterFilter $requestFilter -ModuleName Wunderlist
     	
-    	    # -- Act
+    	    # -- Act (What method is being executed in the act section)
             Get-WunderlistUser
     	
-    	    # -- Assert
+    	    # -- Assert (What determines the outcome of the test in the assert section)
             Assert-MockCalled -CommandName Get-WunderlistData -Times 1 -ParameterFilter $requestFilter -ModuleName Wunderlist
         }
     }
@@ -102,7 +102,7 @@ InModuleScope -ModuleName WunderList {
 
             $url = "url"
             $requestFilter = {($Uri -eq $url) -and ($Method -eq 'GET') -and ($ContentType -eq "application/json") -and ($Headers -eq $header) }
-        	Mock Invoke-RestMethod -ParameterFilter $requestFilter
+            Mock Invoke-RestMethod -ParameterFilter $requestFilter
             Mock Invoke-RestMethod {} #to prevent side effects
         	
             # -- Act
@@ -130,6 +130,52 @@ InModuleScope -ModuleName WunderList {
         }
         
     }
+
+    Describe 'New-WunderlistTask'{
+        Context 'no parameter is provided' {
+            It 'fails' {
+             { New-WunderlistTask -Force } | Should Throw
+            }
+        } #End Context
+        Context 'Create Wunderlist Task'   {
+            It 'Creates Wunderlist task correctly' {
+            # -- Arrange
+            $parameters = @{    'listid'  = '164615123';
+                                'title'  = 'Testing Wunderlist module';
+                                'assignee_id'= '10404479';
+                                'completed' = $true;
+                                'recurrence_type'= 'day';
+                                'recurrence_count'= '1';
+                                'due_date'= '2015-06-30';
+                                'starred'= $false;
+                           }
+
+            $settings = @{  'id'='1224718072';
+                            'assignee_id'='10404479';
+                            'created_at'='2015-07-01T10:57:41.656Z';
+                            'created_by_id'='10404478';
+                            'recurrence_type'='day';
+                            'recurrence_count'='1';
+                            'due_date'='2015-06-30';
+                            'completed'='True';
+                            'completed_at'='2015-07-01T10:57:41.656Z';
+                            'completed_by_id'='10404478';
+                            'starred'='False';
+                            'list_id'='164615123';
+                            'revision'='1';
+                            'title'='Testing Wunderlist module';
+                            'type'='task';
+                        }
+            Mock New-WunderlistTask {$settings}
+
+            # -- Act
+            New-WunderlistTask @params
+
+            # -- Assert
+            Assert-MockCalled -CommandName New-WunderlistTask -Times 1 -ModuleName Wunderlist
+        }
+   }
+   }
 
 #region Authentication
     Describe 'Get-Authentication' {
@@ -219,4 +265,3 @@ InModuleScope -ModuleName WunderList {
 #endregion
 
 }
-
