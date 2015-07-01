@@ -97,7 +97,8 @@ function Get-WunderlistData
 
     $settings = Load-AuthenticationSettings
     $headers = Build-AccessHeader -AuthenticationSettings $settings
-    Invoke-RestMethod -URI $RequestUrl -Method GET -Headers $headers -ContentType 'application/json'
+    $result = Invoke-RestMethod -URI $RequestUrl -Method GET -Headers $headers -ContentType 'application/json'
+    return $result
 }
 
 function Build-AccessHeader
