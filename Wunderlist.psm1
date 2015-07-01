@@ -318,8 +318,8 @@ Function New-WunderlistTask
     [CmdletBinding()]
     param
     (
-        [Parameter(Mandatory = $true)]   [string]$AccessToken,
-        [Parameter(Mandatory = $true)]   [string]$ClientId,
+        [Parameter(Mandatory = $false)]  [string]$AccessToken,
+        [Parameter(Mandatory = $false)]  [string]$ClientId,
         [Parameter(Mandatory = $true)]   [int]$listid,        
         [Parameter(Mandatory = $true)]   [string]$title,
         [Parameter(Mandatory = $false)]  [int]$assignee_id,
@@ -330,7 +330,8 @@ Function New-WunderlistTask
                                          [string]$recurrence_type,
         [Parameter(Mandatory = $false)]  [int]$recurrence_count,
         [Parameter(Mandatory = $false)] 
-        [ValidatePattern("^(19|20)\d\d[-](0[1-9]|1[012])[-](0[1-9]|[12][0-9]|3[01])")]      [string]$due_date,
+        [ValidatePattern("^(19|20)\d\d[-](0[1-9]|1[012])[-](0[1-9]|[12][0-9]|3[01])")]      
+                                         [string]$due_date,
         [Parameter(Mandatory = $false)]  [bool]$starred
 
     )
@@ -348,7 +349,9 @@ Function New-WunderlistTask
                        'starred'            = $starred;
                       }
         $body = ConvertTo-Json -InputObject $hashtable
-        $result = Invoke-RestMethod -URI $HttpRequestUrl -Method POST -body $body -Headers @{ 'X-Access-Token' = $AccessToken; 'X-Client-ID' =  $clientid } -ContentType "application/json"
+        $settings = Load-AuthenticationSettings #new in version 1.1
+        $headers = Build-AccessHeader -AuthenticationSettings $settings #new in version 1.1
+        $result = Invoke-RestMethod -URI $HttpRequestUrl -Method POST -body $body -Headers $headers -ContentType 'application/json'
         $result
     
     
