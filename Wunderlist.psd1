@@ -12,7 +12,7 @@
 RootModule = '.\WunderList.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.0'
+ModuleVersion = '1.1'
 
 # ID used to uniquely identify this module
 GUID = '8ad1740f-235b-4fe6-9cde-c1c516b5faf6'
