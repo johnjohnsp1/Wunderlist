@@ -358,6 +358,124 @@ Function New-WunderlistTask
     
 }
 
+Function New-WunderlistFileUpload
+{
+<#
+  .SYNOPSIS
+   This Function Creates new Wunderlist Upload.
+  .DESCRIPTION
+   This Function Creates new Wunderlist Upload.
+   Current limitation is that only plain text files work correctly and the content type is hardcoded.
+   Future release will determine content type correctly 
+  .EXAMPLE
+   $DebugPreference = 'continue'; #Enable debug messages to be sent to console
+   $AuthUrl = 'https://www.wunderlist.com/oauth/authorize'; # The base authorization URL from the service provider
+   $ClientId = 'xxxxxxxxxxxxxxxxxxxx'; # Your registered application’s client ID
+   $RedirectUri = 'http://www.stranger.nl'; # The callback URL configured on your application
+
+   #Call Get-oAuth2AccessToken
+   Get-oAuth2AccessToken `
+    -AuthUrl $AuthUrl `
+    -ClientId $ClientId `
+    -RedirectUri $RedirectUri
+   
+   New-WunderlistFileUpload -FileName readme.txt
+  .LINK
+  https://developer.wunderlist.com/documentation/endpoints/upload
+
+#>
+    [CmdletBinding()]
+    param
+    (
+        [Parameter(Mandatory=$true)]   [string]$FileName        
+    )
+        Add-Type -AssemblyName "System.Web"
+
+        [int]$FileSize = (Get-Item $FileName).length
+        #[string]$ContentType = [System.Web.MimeMapping]::GetMimeMapping($FileName)
+
+        #Write-Debug "Following content type detected: $ContentType"
+   
+        $HttpRequesturl =  'https://a.wunderlist.com/api/v2/uploads'
+
+        $hashtable = @{'content_type' = 'text/plain';
+                       'file_name' = $FileName;
+                       'file_size' = $FileSize
+                      }
+        $body = ConvertTo-Json -InputObject $hashtable
+
+        $settings = Load-AuthenticationSettings
+        $headers = Build-AccessHeader -AuthenticationSettings $settings
+
+        $result = Invoke-RestMethod -URI $HttpRequestUrl -Method post -body $body -Headers $headers -ContentType "application/json"
+        $result
+        
+        if($result.state = "new"){
+            $headers = @{ 'Authorization' = $result.part.authorization; 'x-amz-date' =  $result.part.date; 'Content-Type' =  "" }
+            $body = get-content $FileName
+            Invoke-RestMethod -URI $result.part.url -Method Put -body $body -Headers $headers
+            }
+}
+
+Function Set-WunderlistFileUpload
+{
+<#
+  .SYNOPSIS
+   This Function updates a Wunderlist Upload and attaches it to a task.
+  .DESCRIPTION
+   This Function updatesWunderlist Upload and attaches it to an existing task.
+  .EXAMPLE
+   $DebugPreference = 'continue'; #Enable debug messages to be sent to console
+   $AuthUrl = 'https://www.wunderlist.com/oauth/authorize'; # The base authorization URL from the service provider
+   $ClientId = 'xxxxxxxxxxxxxxxxxxxx'; # Your registered application’s client ID
+   $RedirectUri = 'http://www.stranger.nl'; # The callback URL configured on your application
+
+   #Call Get-oAuth2AccessToken
+   Get-oAuth2AccessToken `
+    -AuthUrl $AuthUrl `
+    -ClientId $ClientId `
+    -RedirectUri $RedirectUri
+   
+   Set-WunderlistFileUpload -UploadId XXXXXXXX -TaskId XXXXXX
+  .LINK
+  https://developer.wunderlist.com/documentation/endpoints/file
+
+#>
+    [CmdletBinding()]
+    param
+    (
+        [Parameter(Mandatory=$true)]   [int]$uploadid,
+        [Parameter(Mandatory=$true)]   [int]$taskid      
+    )
+       
+        $HttpRequesturl =  'https://a.wunderlist.com/api/v2/uploads/' + $uploadid
+        $State = "finished"
+
+        $hashtable = @{'state' = $State
+                      }
+        $body = ConvertTo-Json -InputObject $hashtable
+
+        $settings = Load-AuthenticationSettings
+        $headers = Build-AccessHeader -AuthenticationSettings $settings
+
+        $result = Invoke-RestMethod -URI $HttpRequestUrl -Method PATCH -body $body -headers $headers -ContentType "application/json"
+        $result 
+
+        $HttpRequesturl =  'https://a.wunderlist.com/api/v1/files/'
+        
+        $hashtable = @{'upload_id' = $uploadid;
+                       'task_id' = $taskid;
+                      }
+
+        $body = ConvertTo-Json -InputObject $hashtable
+               
+        $settings = Load-AuthenticationSettings
+        $headers = Build-AccessHeader -AuthenticationSettings $settings        
+        
+        $result = Invoke-RestMethod -URI $HttpRequestUrl -Method POST -body $body -headers $headers -ContentType "application/json"
+        $result 
+}
+
 #region Authentication
 function Get-AuthenticationSettingsPath 
 {
@@ -398,6 +516,8 @@ Export-ModuleMember -Function @( 'Get-oAuth2AccessToken',
     'Get-WunderlistReminder',
     'Get-WunderlistList',
     'New-WunderlistTask',
+    'New-WunderlistFileUpload',
+    'Set-WunderlistFileUpload',
     'New-AuthenticationSettings',
     'Save-AuthenticationSettings',
     'Load-AuthenticationSettings')
