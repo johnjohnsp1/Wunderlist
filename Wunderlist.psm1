@@ -251,6 +251,9 @@ Function Get-WunderlistTask {
   Get-WunderlistList -AccessToken '619c400c87156477cce37b4369f1adf8b278437a027bdd83962ba44abeb5' `
        -ClientId '123456789' | Get-WunderlistTask -AccessToken '619c400c87156477cce37b4369f1adf8b278437a027bdd83962ba44abeb5' `
        -ClientId '123456789'
+  .EXAMPLE
+  Get all Wunderlist Tasks grouped by Wunderlist lists.
+  get-wunderlistlist | get-wunderlisttask | Format-Table id, title, completed, created_at -GroupBy list_id
   .LINK
   https://developer.wunderlist.com/documentation/endpoints/task
 
