@@ -12,7 +12,7 @@
 RootModule = '.\WunderList.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.1'
+ModuleVersion = '1.2'
 
 # ID used to uniquely identify this module
 GUID = '8ad1740f-235b-4fe6-9cde-c1c516b5faf6'
@@ -72,6 +72,7 @@ FunctionsToExport = @( 'Get-oAuth2AccessToken',
     'Get-WunderlistReminder',
     'Get-WunderlistList',
     'New-WunderlistTask',
+    'Remove-WunderlistTask',
     'New-AuthenticationSettings',
     'Save-AuthenticationSettings',
     'Load-AuthenticationSettings')

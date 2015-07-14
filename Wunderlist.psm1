@@ -460,6 +460,60 @@ Function New-WunderlistFileUpload
         $result 
 }
 
+Function Remove-WunderlistTask
+{
+<#
+  .SYNOPSIS
+   This Function deletes Wunderlist task.
+  .DESCRIPTION
+   This Function deletes Wunderlist task.
+  .EXAMPLE
+   Remove Wunderlist Task with id 123456
+   Remove-WunderlistTask -id 123456
+  .EXAMPLE
+   Remove Wunderlist Task with id 123456 and revision number 1 with whatif switch
+   Remove-WunderlistTask -id 123456 -whatif
+  .EXAMPLE
+   Retrieve all Wunderlist tasks and delete all completed tasks
+   Get-
+   Remove-WunderlistTask -id 123456 -whatif
+  .EXAMPLE
+   Confirm the deletion of each Wunderlist Task which is completed
+   get-wunderlistlist | get-wunderlisttask | Where-Object {$_.completed -eq $true} | Remove-WunderlistTask -Confirm
+  .LINK
+  https://developer.wunderlist.com/documentation/endpoints/task
+
+#>
+    [CmdletBinding(SupportsShouldProcess=$true,ConfirmImpact='Medium')]
+    [OutputType('System.Management.Automation.PSCustomObject')]
+    param
+    (
+        [Parameter(Mandatory = $false)]  [string]$AccessToken,
+        [Parameter(Mandatory = $false)]  [string]$ClientId,
+        [Parameter(Mandatory  =$true,ValueFromPipelineByPropertyName=$true)]   [string] [Alias("TaskId")] $Id
+    )
+
+    process {
+
+        $Wunderlisttask = get-wunderlistList | get-wunderlisttask | Where-Object {$_.id -eq $id} 
+
+        If ($pscmdlet.ShouldProcess($Wunderlisttask.title, "Deleting WunderlistTask"))
+        {
+            $revision = $Wunderlisttask.revision
+
+            $HttpRequestUrl = 'https://a.wunderlist.com/api/v1/tasks/{0}?revision={1}' -f $id, $revision 
+               
+            $settings = Load-AuthenticationSettings
+            $headers = Build-AccessHeader -AuthenticationSettings $settings        
+        
+            $result = Invoke-RestMethod -URI $HttpRequestUrl -Method DELETE -headers $headers
+            $result 
+        }
+        
+    }
+}
+
+
 #region Authentication
 function Get-AuthenticationSettingsPath 
 {
@@ -500,6 +554,7 @@ Export-ModuleMember -Function @( 'Get-oAuth2AccessToken',
     'Get-WunderlistReminder',
     'Get-WunderlistList',
     'New-WunderlistTask',
+    'Remove-WunderlistTask',
     'New-WunderlistFileUpload',
     'New-AuthenticationSettings',
     'Save-AuthenticationSettings',
